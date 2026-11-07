@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Hack 计算机全机仿真 · 电路仿真器第三部</title>
+  <style>
+    :root {
+      --bg: #0b1014; --panel: #121a21; --line: #1f2c36; --text: #cfe3d8; --dim: #6d8478;
+      --accent: #20e180; --accent2: #4cc2ff;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; background: var(--bg); color: var(--text);
+      font-family: "Cascadia Code", Consolas, "Microsoft YaHei", monospace; font-size: 14px;
+    }
+    header {
+      display: flex; flex-wrap: wrap; gap: 12px; align-items: center;
+      padding: 12px 20px; border-bottom: 1px solid var(--line); background: var(--panel);
+    }
+    header h1 { font-size: 16px; margin: 0 16px 0 0; color: var(--accent); }
+    button, select {
+      background: var(--panel); color: var(--text); border: 1px solid var(--line);
+      padding: 6px 12px; border-radius: 6px; font: inherit; cursor: pointer;
+    }
+    button:hover, select:hover { border-color: var(--accent); }
+    main { display: flex; flex-wrap: wrap; gap: 20px; padding: 20px; }
+    .screen-wrap { flex: 0 0 auto; }
+    canvas#screen {
+      width: 768px; height: 384px; image-rendering: pixelated;
+      border: 1px solid var(--line); border-radius: 8px; background: #05080a;
+      outline: none;
+    }
+    .side { flex: 1 1 300px; min-width: 280px; display: flex; flex-direction: column; gap: 12px; }
+    .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; }
+    .panel-title { color: var(--accent2); margin-bottom: 8px; }
+    .panel-line { margin: 4px 0; }
+    .dim { color: var(--dim); font-size: 12px; }
+    .chips { display: flex; flex-wrap: wrap; gap: 4px; margin: 8px 0; }
+    .chip {
+      background: #0d1419; border: 1px solid var(--line); border-radius: 4px;
+      padding: 2px 6px; font-size: 11px; color: var(--dim);
+    }
+    .stat b { color: var(--accent); font-weight: 600; }
+    label { color: var(--dim); }
+    footer { padding: 8px 20px; color: var(--dim); font-size: 12px; border-top: 1px solid var(--line); }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>⚙ Hack 全机仿真</h1>
+    <select id="demoSelect"></select>
+    <button id="btnRun">▶ 运行</button>
+    <button id="btnStep">⏭ 单周期</button>
+    <button id="btnReset">⟲ 复位</button>
+    <label>速度（周期/帧）<input id="speed" type="range" min="10" max="5000" value="800" step="10" /> <span id="speedVal">800</span></label>
+  </header>
+  <main>
+    <div class="screen-wrap">
+      <canvas id="screen" tabindex="0"></canvas>
+      <div class="panel-line dim">512×256 单色帧缓冲 · 直接读取 SCREEN 芯片状态渲染</div>
+      <canvas id="circuit" width="900" height="560"></canvas>
+      <div class="panel-line dim">电路视图（cir-canvas）：Hack 全机 53 组件网表 · 滚轮缩放 / 空格平移 / 可框选观察 · 编辑网表会重载整机（程序幸存）</div>
+    </div>
+    <div class="side">
+      <div class="panel stat">
+        <div class="panel-title">机器状态</div>
+        <div class="panel-line">周期 <b id="statCycles">0</b></div>
+        <div class="panel-line">PC <b id="statPc">0x0000</b> · A <b id="statA">0x0000</b> · D <b id="statD">0</b></div>
+        <div class="panel-line">键盘 <b id="kbdNow">—</b> <span class="dim">（页面上直接按键注入，方向键 37-40 / Enter 13 / Esc 27）</span></div>
+        <div class="panel-line"><button id="btnRam">读 RAM 0..2</button> <b id="statRam1">—</b></div>
+        <div class="panel-line dim" id="cirStatus"></div>
+      </div>
+      <div class="panel" id="circuitPanel">
+        <div class="panel-title">Hack 全机网表（展开后）</div>
+        <div class="panel-line">53 组件 · 87 连线</div>
+        <div class="chips">
+          <span class="chip">SPLIT×16</span><span class="chip">AND×8</span><span class="chip">MUX16×5</span>
+          <span class="chip">OR×4</span><span class="chip">NOT×2</span><span class="chip">ALU</span>
+          <span class="chip">DREGISTER</span><span class="chip">AREGISTER</span><span class="chip">PC</span>
+          <span class="chip">ROM32K</span><span class="chip">MEMDECODE</span><span class="chip">RAM16K</span>
+          <span class="chip">SCREEN</span><span class="chip">DFF 原语×0</span>
+        </div>
+        <div class="panel-line dim">画布上拖动观察；编辑后引擎自动重载（句柄认领 → 程序/屏幕幸存）</div>
+      </div>
+      <div class="panel">
+        <div class="panel-title" id="demoDesc"></div>
+        <div class="panel-line dim">芯片库：31 kind（黄金向量逐一对拍）+ 引擎 12 原语，全部注册进画布形状表</div>
+      </div>
+    </div>
+  </main>
+  <footer>
+    电路仿真器 · 第三部交付：nand-computer 黄金向量全对拍（ALU 1536 例 / PC / RAM / 整机 trace / SHA-256 帧哈希）· 零运行时依赖 · GitHub Pages 静态部署
+  </footer>
+  <script src="app.js"></script>
+</body>
+</html>
