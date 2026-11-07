@@ -1,0 +1,20 @@
+{
+  "name": "cir-main",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:long": "TETRIS_DIFF=1 vitest run tests/m6-tetris-diff.test.ts",
+    "typecheck": "tsc --noEmit",
+    "bench": "vitest run --config vitest.bench.config.ts --no-file-parallelism",
+    "build": "node scripts/build.mjs",
+    "serve": "node scripts/serve.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "esbuild": "^0.24.0",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.9"
+  }
+}
