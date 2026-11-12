@@ -26,8 +26,10 @@ npm test          # 正确性测试
 npm run typecheck
 ```
 
-可选：程序级差分（俄罗斯方块与 nand-computer 官方行为核逐字节对拍）
+可选：程序级差分（俄罗斯方块与 nand-computer 官方行为核逐字节对拍，约 40 秒）
 
 ```bash
-TETRIS_DIFF=1 npx vitest run tests/m6-tetris-diff.test.ts
+npm run test:long
 ```
+
+行为核默认读 `C:/works/nand-computer/software/demo/engine.js`，换机器用 `HACKCORE_PATH` 覆盖。

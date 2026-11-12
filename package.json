@@ -5,7 +5,7 @@
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:long": "TETRIS_DIFF=1 vitest run tests/m6-tetris-diff.test.ts",
+    "test:long": "vitest run --config vitest.diff.config.ts --no-file-parallelism",
     "typecheck": "tsc --noEmit",
     "bench": "vitest run --config vitest.bench.config.ts --no-file-parallelism",
     "build": "node scripts/build.mjs",

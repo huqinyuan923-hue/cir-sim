@@ -2,6 +2,7 @@
  * tetris 程序级差分对拍（可选长测，默认跳过）：
  *
  *   TETRIS_DIFF=1 npx vitest run tests/m6-tetris-diff.test.ts
+ *   或跨平台：npm run test:long
  *
  * 用 nand-computer 官方行为核（software/demo/engine.js，只读引用）跑同样周期数，
  * 逐字节比对 RAM（0x0000-0x3FFF）与屏幕区（0x4000-0x5FFF）的 SHA-256。
@@ -15,7 +16,7 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -31,7 +32,15 @@ describe.skipIf(!ENABLED)('M6 · tetris 程序级差分（TETRIS_DIFF=1 开启�
     const rom = parseHack(readFileSync(join(here, '..', 'src', 'hack', 'programs', 'tetris.hack'), 'utf-8'));
     const N = 3_000_000;
 
-    const modUrl = pathToFileURL('C:/works/nand-computer/software/demo/engine.js').href;
+    // 行为核来自 nand-computer（跨项目只读借用）。换机器用 HACKCORE_PATH 覆盖。
+    const oraclePath =
+      process.env['HACKCORE_PATH'] ?? 'C:/works/nand-computer/software/demo/engine.js';
+    if (!existsSync(oraclePath)) {
+      throw new Error(
+        `找不到行为核：${oraclePath}（用 HACKCORE_PATH 指向 nand-computer/software/demo/engine.js）`,
+      );
+    }
+    const modUrl = pathToFileURL(oraclePath).href;
     const { HackCore } = await import(modUrl);
     const core = new HackCore(rom);
     for (let i = 0; i < N; i++) core.step();
